@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>infoBook</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #f8f9fa;
+    }
+    #header {
+      padding: 15px 25px;
+      background: #2c3e50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    #header h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #ecf0f1;
+      font-weight: 600;
+    }
+    #map-container {
+      display: flex;
+      flex: 1;
+      margin: 15px;
+      gap: 20px;
+    }
+    #map {
+      flex: 3;
+      height: 100%;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 1px solid #ddd;
+    }
+    #sidebar {
+      flex: 1;
+      padding: 25px;
+      background: #ffffff;
+      overflow-y: auto;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      min-width: 320px;
+      transition: all 0.3s ease;
+    }
+    .language-toggles {
+      display: flex;
+      gap: 10px;
+    }
+    .language-toggle {
+      padding: 8px 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      font-size: 14px;
+    }
+    .language-toggle:hover {
+      background: #2980b9;
+      transform: translateY(-1px);
+    }
+    .language-toggle.active {
+      background: #e74c3c;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .custom-svg-icon {
+      background: transparent !important;
+      border: none !important;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+    }
+    .book-info {
+      margin-top: 20px;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #34495e;
+    }
+    .book-info h2 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-size: 24px;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+    #no-selection {
+      color: #7f8c8d;
+      font-style: italic;
+      text-align: center;
+      margin-top: 50px;
+      font-size: 18px;
+    }
+    .leaflet-container {
+      background: #ecf0f1 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>infoBook</h1>
+    <div class="language-toggles">
+      <button class="language-toggle active" id="lang-ru">РУС</button>
+      <button class="language-toggle" id="lang-kz">ҚАЗ</button>
+      <button class="language-toggle" id="lang-en">ENG</button>
+    </div>
+  </div>
+  
+  <div id="map-container">
+    <div id="map"></div>
+    <div id="sidebar">
+      <div id="no-selection">Выберите место на карте</div>
+      <div id="place-info" class="book-info hidden">
+        <h2 id="info-title"></h2>
+        <p id="info-content"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Данные на трех языках
+    const data = {
+      ru: {
+        places: [
+          {
+            coords: [51.1251, 71.4304],
+            title: "История Астаны",
+            content: "Фундаментальный труд о становлении столицы Казахстана, охватывающий период с 1997 года по настоящее время."
+          },
+          {
+            coords: [51.1113, 71.4011],
+            title: "Архитектура Хан Шатыра",
+            content: "Иллюстрированный альбом об уникальном архитектурном проекте Нормана Фостера."
+          }
+        ],
+        noSelection: "Выберите место на карте"
+      },
+      kz: {
+        places: [
+          {
+            coords: [51.1251, 71.4304],
+            title: "Астана тарихы",
+            content: "Қазақстан астанасының 1997 жылдан бастап қалыптасуына арналған фундаменталды еңбек."
+          },
+          {
+            coords: [51.1113, 71.4011],
+            title: "Хан Шатыр сәулеті",
+            content: "Норман Фостердің бірегей сәулет жобасы туралы суретті альбом."
+          }
+        ],
+        noSelection: "Картадан орынды таңдаңыз"
+      },
+      en: {
+        places: [
+          {
+            coords: [51.1251, 71.4304],
+            title: "History of Astana",
+            content: "Comprehensive work about the formation of Kazakhstan's capital, covering the period from 1997 to the present."
+          },
+          {
+            coords: [51.1113, 71.4011],
+            title: "Khan Shatyr Architecture",
+            content: "Illustrated album about Norman Foster's unique architectural project."
+          }
+        ],
+        noSelection: "Select a location on the map"
+      }
+    };
+
+    let currentLang = 'ru';
+    const map = L.map('map').setView([51.1282, 71.4307], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Крупная SVG-иконка книги
+    const bookIcon = L.divIcon({
+      html: `
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+          <!-- Основная форма маркера -->
+          <path fill="#e74c3c" d="M12 2C8.1 2 5 5.1 5 9c0 5 7 12 7 12s7-7 7-12c0-3.9-3.1-7-7-7z" 
+                stroke="#c0392b" stroke-width="0.5"/>
+          
+          <!-- Книга (левая часть) -->
+          <path fill="#f5f5f5" d="M11.8 4.9v10c-1.1-1.9-3.7-1.7-4.5-0.2l-0.1-9c0.4-1.9 4.2-2.2 4.7-0.8z" 
+                stroke="#ddd" stroke-width="0.3"/>
+                
+          <!-- Книга (правая часть) -->
+          <path fill="#f5f5f5" d="M12.2 4.9v10c1.1-1.9 3.7-1.7 4.5-0.2l0.1-9c-0.4-1.9-4.2-2.2-4.7-0.8z" 
+                stroke="#ddd" stroke-width="0.3"/>
+                
+          <!-- Детализация корешка -->
+          <path fill="#c0392b" d="M12 6l0.2-1h-0.4l0.2 1z" opacity="0.8"/>
+        </svg>
+      `,
+      className: 'custom-svg-icon',
+      iconSize: [56, 56],  // Оптимальный размер для хорошей видимости
+      iconAnchor: [28, 56], // Точка привязки по центру нижнего края
+      popupAnchor: [0, -56] // Смещение попапа вверх
+    });
+
+    let markers = [];
+    let selectedMarker = null;
+    
+    // Обновление интерфейса при смене языка
+    function updateUI(lang) {
+      document.getElementById('no-selection').textContent = data[lang].noSelection;
+      
+      // Обновляем активную кнопку языка
+      document.querySelectorAll('.language-toggle').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById(`lang-${lang}`).classList.add('active');
+      
+      if (selectedMarker !== null) {
+        const place = data[lang].places[selectedMarker];
+        document.getElementById('info-title').textContent = place.title;
+        document.getElementById('info-content').textContent = place.content;
+      }
+    }
+
+    // Инициализация маркеров
+    function updateMap(lang) {
+      // Удаляем старые маркеры
+      markers.forEach(marker => map.removeLayer(marker));
+      markers = [];
+      
+      // Добавляем новые
+      data[lang].places.forEach((place, index) => {
+        const marker = L.marker(place.coords, { icon: bookIcon })
+          .addTo(map)
+          .on('click', () => {
+            selectedMarker = index;
+            document.getElementById('info-title').textContent = place.title;
+            document.getElementById('info-content').textContent = place.content;
+            document.getElementById('place-info').classList.remove('hidden');
+            document.getElementById('no-selection').classList.add('hidden');
+          });
+        markers.push(marker);
+      });
+    }
+
+    // Переключение языка
+    document.getElementById('lang-ru').addEventListener('click', () => {
+      currentLang = 'ru';
+      updateUI(currentLang);
+      updateMap(currentLang);
+    });
+    
+    document.getElementById('lang-kz').addEventListener('click', () => {
+      currentLang = 'kz';
+      updateUI(currentLang);
+      updateMap(currentLang);
+    });
+    
+    document.getElementById('lang-en').addEventListener('click', () => {
+      currentLang = 'en';
+      updateUI(currentLang);
+      updateMap(currentLang);
+    });
+
+    // Первая загрузка
+    updateUI(currentLang);
+    updateMap(currentLang);
+  </script>
+</body>
+</html>
