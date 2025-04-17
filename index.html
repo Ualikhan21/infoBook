@@ -30,6 +30,73 @@
       color: #ecf0f1;
       font-weight: 600;
     }
+    .search-box{
+      width: fit-content;
+      height: fit-content;
+      position: relative;
+    }
+    .input-search{
+      height: 30px;
+      width: 200px;
+      border-style: none;
+      padding: 10px;
+      font-size: 18px;
+      letter-spacing: 2px;
+      outline: none;
+      border-radius: 25px;
+      transition: all .5s ease-in-out;
+      background-color: #3498db;
+      padding-right: 40px;
+      color:#fff;
+    }
+    .input-search::placeholder{
+      color:rgba(255,255,255,.5);
+      font-size: 18px;
+      letter-spacing: 2px;
+      font-weight: 100;
+    }
+    .btn-search{
+      width: 50px;
+      height: 50px;
+      border-style: none;
+      font-size: 20px;
+      font-weight: bold;
+      outline: none;
+      cursor: pointer;
+      border-radius: 50%;
+      position: absolute;
+      right: 0px;
+      color:#ffffff ;
+      background-color:transparent;
+      pointer-events: painted;  
+    }
+    .btn-search:focus ~ .input-search{
+      width: 300px;
+      border-radius: 0px;
+      background-color: transparent;
+      border-bottom:1px solid rgba(255,255,255,.5);
+      transition: all 500ms cubic-bezier(0, 0.110, 0.35, 2);
+    }
+    .input-search:focus{
+      width: 300px;
+      border-radius: 0px;
+      background-color: transparent;
+      border-bottom:1px solid rgba(255,255,255,.5);
+      transition: all 500ms cubic-bezier(0, 0.110, 0.35, 2);
+    }
+    #search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      max-height: 300px;
+      overflow-y: auto;
+      background: white;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 1001;
+    }
     #map-container {
       display: flex;
       flex: 1;
@@ -113,6 +180,11 @@
 <body>
   <div id="header">
     <h1>infoBook</h1>
+    <div class="search-box">
+      <button class="btn-search"><i class="fas fa-search"></i></button>
+      <input type="text" class="input-search" id="search-input" placeholder="Пойск">
+      <div id="search-results"></div>
+    </div>
     <div class="language-toggles">
       <button class="language-toggle active" id="lang-ru">РУС</button>
       <button class="language-toggle" id="lang-kz">ҚАЗ</button>
@@ -138,47 +210,35 @@
       ru: {
         places: [
           {
-            coords: [51.1251, 71.4304],
-            title: "История Астаны",
-            content: "Фундаментальный труд о становлении столицы Казахстана, охватывающий период с 1997 года по настоящее время."
+            coords: [51.129389, 71.386422],
+            title: "Улица Сыганак",
+            content: "Улица Сыганак — одна из улиц столицы, носящая историческое название. Она названа в честь одного из древнейших и крупнейших городов на берегу Сырдарьи — Сыганака. Первые упоминания об этом городе относятся к X веку. В XI веке Махмуд Кашгари упоминает его как один из городов огузов. В XIII–XVI веках Сыганак был известен как международный и местный торговый центр. В город прибывали караваны из таких городов, как Мавераннахр, Кашгар, Туркестан. В XIV веке он стал столицей Ак Орды и достиг расцвета при хане Ерзене. В Сыганаке строились мечети, медресе и жилые дома. В XV–XVI веках город был важным административным и военным центром Казахского ханства. Сыганак, бывший столицей нескольких государств, является великим историческим наследием."
           },
-          {
-            coords: [51.1113, 71.4011],
-            title: "Архитектура Хан Шатыра",
-            content: "Иллюстрированный альбом об уникальном архитектурном проекте Нормана Фостера."
-          }
         ],
-        noSelection: "Выберите место на карте"
+        noSelection: "Выберите место на карте",
+        searchInput: "Пойск"
       },
       kz: {
         places: [
-          {
-            coords: [51.1251, 71.4304],
-            title: "Астана тарихы",
-            content: "Қазақстан астанасының 1997 жылдан бастап қалыптасуына арналған фундаменталды еңбек."
+        {
+            coords: [51.129389, 71.386422],
+            title: "Сығанақ көшесі",
+            content: "Сығанақ көшесі — елордадағы тарихи атауға ие көшелердің бірі. Оның атауы Сыр бойындағы ежелгі әрі ірі қалалардың бірі — Сығанақтың құрметіне қойылған. Бұл қала жайлы алғашқы деректер Х ғасырда кездеседі. XI ғасырда Махмұт Қашқари оны оғыз қалаларының бірі ретінде атап өтеді. XIII-XVI ғасырларда Сығанақ халықаралық және жергілікті сауда орталығы ретінде танымал болды. Қалаға Мауереннахр, Қашқар, Түркістан секілді қалалардан керуендер келіп тұрған. XIV ғасырда Ақ Орданың астанасына айналды, ал Ерзен хан тұсында гүлдене түсті. Қалада мешіт-медреселер, тұрғын үйлер салынды. XV-XVI ғасырларда Сығанақ Қазақ хандығының маңызды әкімшілік және әскери тірек орталығы болды. Өзінің тарихында бірнеше мемлекетке астана болған Сығанақ — ұлы тарихи мұра."
           },
-          {
-            coords: [51.1113, 71.4011],
-            title: "Хан Шатыр сәулеті",
-            content: "Норман Фостердің бірегей сәулет жобасы туралы суретті альбом."
-          }
         ],
-        noSelection: "Картадан орынды таңдаңыз"
+        noSelection: "Картадан орынды таңдаңыз",
+        searchInput: "Іздеу"
       },
       en: {
         places: [
-          {
-            coords: [51.1251, 71.4304],
-            title: "History of Astana",
-            content: "Comprehensive work about the formation of Kazakhstan's capital, covering the period from 1997 to the present."
+        {
+            coords: [51.129389, 71.386422],
+            title: "Street Syganak",
+            content: "Syganak Street \nThis street is named after Syganak, an ancient city on the Syr Darya River, known since the 10th century. Mahmud al-Kashgari listed it as a major Oghuz city. It became a trade center between Central Asia and neighboring regions, and was the capital of the White Horde in the 14th century. During the Kazakh Khanate, it served as an important military and administrative hub."
           },
-          {
-            coords: [51.1113, 71.4011],
-            title: "Khan Shatyr Architecture",
-            content: "Illustrated album about Norman Foster's unique architectural project."
-          }
         ],
-        noSelection: "Select a location on the map"
+        noSelection: "Select a location on the map",
+        searchInput: "Search"
       }
     };
 
@@ -220,6 +280,7 @@
     // Обновление интерфейса при смене языка
     function updateUI(lang) {
       document.getElementById('no-selection').textContent = data[lang].noSelection;
+      document.getElementById('search-input').placeholder = data[lang].searchInput;
       
       // Обновляем активную кнопку языка
       document.querySelectorAll('.language-toggle').forEach(btn => {
@@ -253,6 +314,17 @@
           });
         markers.push(marker);
       });
+    }
+
+    //Пойсковик
+    var results = [];
+    var searchField = "name";
+    var searchVal = "my Name";
+    for (var i=0 ; i < obj.list.length ; i++)
+    {
+        if (obj.list[i][searchField] == searchVal) {
+            results.push(obj.data[i]);
+        }
     }
 
     // Переключение языка
