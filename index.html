@@ -45,11 +45,12 @@
       outline: none;
       border-radius: 25px;
       transition: all .5s ease-in-out;
-      background-color: #3498db;
+      background-color: #4e647a;
       padding-right: 40px;
       color:#fff;
     }
     .input-search::placeholder{
+      text-align: center;
       color:rgba(255,255,255,.5);
       font-size: 18px;
       letter-spacing: 2px;
@@ -83,6 +84,32 @@
       background-color: transparent;
       border-bottom:1px solid rgba(255,255,255,.5);
       transition: all 500ms cubic-bezier(0, 0.110, 0.35, 2);
+    }
+    .search-results {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2c3e50;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-height: 240px;
+      overflow-y: auto;
+      z-index: 1000;
+      width: 350px;
+      display: none;
+      color: #ffffff;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 16px;
+      padding-top: 8px 0;
+    }
+
+    .search-results div {
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .search-results div:hover {
+      background-color: #ffffff30;
     }
     #map-container {
       display: flex;
@@ -170,6 +197,7 @@
     <div class="search-box">
       <button class="btn-search"><i class="fas fa-search"></i></button>
       <input type="text" class="input-search" id="search-input" placeholder="Пойск">
+      <div id="search-results" class="search-results"></div>
     </div>
     <div class="language-toggles">
       <button class="language-toggle active" id="lang-ru">РУС</button>
@@ -191,15 +219,19 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // Данные на трех языках
     const data = {
       ru: {
         places: [
           {
-            coords: [51.129389, 71.386422],
-            title: "Улица Сыганак",
+            coords: [51.12389, 71.38422],
+            title: "Сыганак",
             content: "Улица Сыганак — одна из улиц столицы, носящая историческое название. Она названа в честь одного из древнейших и крупнейших городов на берегу Сырдарьи — Сыганака. Первые упоминания об этом городе относятся к X веку. В XI веке Махмуд Кашгари упоминает его как один из городов огузов. В XIII–XVI веках Сыганак был известен как международный и местный торговый центр. В город прибывали караваны из таких городов, как Мавераннахр, Кашгар, Туркестан. В XIV веке он стал столицей Ак Орды и достиг расцвета при хане Ерзене. В Сыганаке строились мечети, медресе и жилые дома. В XV–XVI веках город был важным административным и военным центром Казахского ханства. Сыганак, бывший столицей нескольких государств, является великим историческим наследием."
           },
+          {
+            coords: [51.129389, 71.386422],
+            title: "ааа Улица",
+            content: ""
+          }
         ],
         noSelection: "Выберите место на карте",
         searchInput: "Пойск"
@@ -234,7 +266,6 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Крупная SVG-иконка книги
     const bookIcon = L.divIcon({
       html: `
         <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
@@ -255,20 +286,18 @@
         </svg>
       `,
       className: 'custom-svg-icon',
-      iconSize: [56, 56],  // Оптимальный размер для хорошей видимости
-      iconAnchor: [28, 56], // Точка привязки по центру нижнего края
-      popupAnchor: [0, -56] // Смещение попапа вверх
+      iconSize: [56, 56],  
+      iconAnchor: [28, 56],
+      popupAnchor: [0, -56] 
     });
 
     let markers = [];
     let selectedMarker = null;
     
-    // Обновление интерфейса при смене языка
     function updateUI(lang) {
       document.getElementById('no-selection').textContent = data[lang].noSelection;
       document.getElementById('search-input').placeholder = data[lang].searchInput;
       
-      // Обновляем активную кнопку языка
       document.querySelectorAll('.language-toggle').forEach(btn => {
         btn.classList.remove('active');
       });
@@ -281,13 +310,10 @@
       }
     }
 
-    // Инициализация маркеров
     function updateMap(lang) {
-      // Удаляем старые маркеры
       markers.forEach(marker => map.removeLayer(marker));
       markers = [];
       
-      // Добавляем новые
       data[lang].places.forEach((place, index) => {
         const marker = L.marker(place.coords, { icon: bookIcon })
           .addTo(map)
@@ -302,10 +328,71 @@
       });
     }
 
-    //Пойсковик
-    
+      const searchInput = document.getElementById('search-input');
+      const searchResults = document.getElementById('search-results');
 
-    // Переключение языка
+      searchInput.addEventListener('input', function () {
+        const query = this.value.toLowerCase();
+        searchResults.innerHTML = '';
+
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        selectedMarker = null;
+
+        const matchingPlaces = data[currentLang].places
+          .map((place, index) => ({ ...place, index }))
+          .filter(item => item.title.toLowerCase().includes(query));
+
+        if (query === '') {
+          searchResults.style.display = 'none';
+          updateMap(currentLang);
+          return;
+        }
+
+        if (matchingPlaces.length === 0) {
+          searchResults.style.display = 'block';
+          searchResults.innerHTML = '<div style="padding:10px;color:#999;">Ничего не найдено</div>';
+          return;
+        }
+
+        matchingPlaces.forEach(item => {
+          const div = document.createElement('div');
+          div.textContent = item.title;
+          div.style.padding = '10px';
+          div.style.cursor = 'pointer';
+          div.style.borderBottom = '1px solid #eee';
+          div.addEventListener('click', () => {
+            map.setView(item.coords, 15);
+            document.getElementById('info-title').textContent = item.title;
+            document.getElementById('info-content').textContent = item.content;
+            document.getElementById('place-info').classList.remove('hidden');
+            document.getElementById('no-selection').classList.add('hidden');
+            searchResults.style.display = 'none';
+            searchInput.value = item.title;
+          });
+          searchResults.appendChild(div);
+
+          const marker = L.marker(item.coords, { icon: bookIcon }).addTo(map).on('click', () => {
+            document.getElementById('info-title').textContent = item.title;
+            document.getElementById('info-content').textContent = item.content;
+            document.getElementById('place-info').classList.remove('hidden');
+            document.getElementById('no-selection').classList.add('hidden');
+          });
+
+          markers.push(marker);
+        });
+
+        searchResults.style.display = 'block';
+      });
+
+
+    document.addEventListener('click', (event) => {
+      const isClickInside = document.querySelector('.search-box').contains(event.target);
+      if (!isClickInside) {
+        searchResults.style.display = 'none';
+      }
+    });
+
     document.getElementById('lang-ru').addEventListener('click', () => {
       currentLang = 'ru';
       updateUI(currentLang);
@@ -324,9 +411,10 @@
       updateMap(currentLang);
     });
 
-    // Первая загрузка
+  document.addEventListener("DOMContentLoaded", () => {
     updateUI(currentLang);
     updateMap(currentLang);
+  });
   </script>
 </body>
 </html>
