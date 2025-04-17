@@ -84,19 +84,6 @@
       border-bottom:1px solid rgba(255,255,255,.5);
       transition: all 500ms cubic-bezier(0, 0.110, 0.35, 2);
     }
-    #search-results {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      max-height: 300px;
-      overflow-y: auto;
-      background: white;
-      border-radius: 0 0 10px 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      display: none;
-      z-index: 1001;
-    }
     #map-container {
       display: flex;
       flex: 1;
@@ -183,7 +170,6 @@
     <div class="search-box">
       <button class="btn-search"><i class="fas fa-search"></i></button>
       <input type="text" class="input-search" id="search-input" placeholder="Пойск">
-      <div id="search-results"></div>
     </div>
     <div class="language-toggles">
       <button class="language-toggle active" id="lang-ru">РУС</button>
@@ -317,15 +303,7 @@
     }
 
     //Пойсковик
-    var results = [];
-    var searchField = "name";
-    var searchVal = "my Name";
-    for (var i=0 ; i < obj.list.length ; i++)
-    {
-        if (obj.list[i][searchField] == searchVal) {
-            results.push(obj.data[i]);
-        }
-    }
+    
 
     // Переключение языка
     document.getElementById('lang-ru').addEventListener('click', () => {
